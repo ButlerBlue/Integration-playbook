@@ -10,7 +10,7 @@ This playbook is a generalized version of process documentation I built over sev
 
 **A note on genericization:** every page here has been deliberately stripped of employer-specific product names, internal tooling, real client and vendor names, and any architecture detail specific to a particular company's systems. What's left is the reusable methodology: the decision frameworks, the escalation philosophy, the security posture, and the communication patterns. Where an example is needed, it uses generic placeholder names.
 
-More background on how I think about this work: [butlerblue.github.io](https://butlerblue.github.io) | [LinkedIn](https://www.linkedin.com/in/sdlatt)
+More background on how I think about this work: [butlerblue.github.io](https://butlerblue.github.io/StephanieDlatt.github.io/)) | [LinkedIn](https://www.linkedin.com/in/sdlatt)
 
 ## Contents
 
