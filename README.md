@@ -24,6 +24,27 @@ More background on how I think about this work: [Portfolio](https://butlerblue.g
 | [Incident Runbook: Org Suspended or Disabled](docs/06-incident-org-suspended.md) | What to do when a client's CRM production environment gets locked, most often a billing issue, and how to safely bring integrations back online afterward. |
 | [Responding to an API Limit Alert](docs/07-api-limit-alert-response.md) | Identifying and resolving runaway API consumption before it takes an entire org offline. |
 | [Partner Communication Templates](docs/08-communication-templates.md) | Reusable email templates for partner onboarding, OAuth troubleshooting, permission errors, overconsumption notices, and support case redirects. |
+| [Identity Keys vs. Record Keys](docs/09-identity-vs-record-keys.md) | Why an SSO integration needs two identifiers, one to authenticate and one to match records, and why email should never be either. |
+| [Runbook: Records Missing from an Incremental Sync](docs/10-runbook-records-missing-from-sync.md) | Diagnosing records that never sync and never error, and fixing them safely without tripping automation or API limits. |
+
+## Templates
+
+Fill-in documents that put the playbook into practice.
+
+| Template | Use it for |
+|---|---|
+| [Integration Scope Document](templates/integration-scope-document.md) | Scoping a third-party integration field by field before anything is provisioned: approvals, auth, data scope, identifiers, responsibilities, cutover. |
+| [Scoped Working Session Agenda](templates/scoped-working-session-agenda.md) | Turning "can we hop on a call?" into a focused session, with the invitation, agenda, and same-day recap. |
+
+## Claude Skills
+
+Reusable [Claude skills](skills/README.md) built on the same methodology, ready to install and adapt.
+
+| Skill | What it does |
+|---|---|
+| [explain-the-why](skills/explain-the-why/SKILL.md) | Drafts replies that explain a technical fix so the colleague can handle it themselves next time. |
+| [wikijs-page-draft](skills/wikijs-page-draft/SKILL.md) | Drafts publish-ready Wiki.js pages for internal wikis or external developer docs. |
+| [integrator-access-review](skills/integrator-access-review/SKILL.md) | Reviews a vendor access request against least-privilege gate checks and drafts the reply. |
 
 ## License
 
