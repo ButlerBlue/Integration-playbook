@@ -26,6 +26,8 @@ More background on how I think about this work: [Portfolio](https://butlerblue.g
 | [Partner Communication Templates](docs/08-communication-templates.md) | Reusable email templates for partner onboarding, OAuth troubleshooting, permission errors, overconsumption notices, and support case redirects. |
 | [Identity Keys vs. Record Keys](docs/09-identity-vs-record-keys.md) | Why an SSO integration needs two identifiers, one to authenticate and one to match records, and why email should never be either. |
 | [Runbook: Records Missing from an Incremental Sync](docs/10-runbook-records-missing-from-sync.md) | Diagnosing records that never sync and never error, and fixing them safely without tripping automation or API limits. |
+| [Runbook: Pre-Load Checks for a Historical Data Load](docs/11-runbook-historical-data-load.md) | Verifying a vendor's history file before it goes into the CRM: upsert keys, parent key formats, time zones, and a clean ready, held, and dropped split. |
+| [Retiring the OAuth Implicit Flow](docs/12-retiring-oauth-implicit-flow.md) | Scoping, inventorying, and communicating a move from the implicit flow to authorization code with PKCE, including vendor and client message templates. |
 
 ## Templates
 
@@ -45,6 +47,7 @@ Reusable [Claude skills](skills/README.md) built on the same methodology, ready 
 | [explain-the-why](skills/explain-the-why/SKILL.md) | Drafts replies that explain a technical fix so the colleague can handle it themselves next time. |
 | [wikijs-page-draft](skills/wikijs-page-draft/SKILL.md) | Drafts publish-ready Wiki.js pages for internal wikis or external developer docs. |
 | [integrator-access-review](skills/integrator-access-review/SKILL.md) | Reviews a vendor access request against least-privilege gate checks and drafts the reply. |
+| [data-load-preflight](skills/data-load-preflight/SKILL.md) | Checks a vendor's data export before it's loaded and drafts one consolidated question list for the vendor. |
 
 ## License
 
