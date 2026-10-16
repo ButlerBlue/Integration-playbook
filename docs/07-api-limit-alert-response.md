@@ -21,7 +21,7 @@ The account owner is responsible for client and partner/integrator communication
 
 2. **Confirm the trend with your monitoring tooling** (e.g., Datadog or an equivalent org health dashboard). Look at the rate of increase, typically shown over the last several days, and share that with the team as well so the urgency is clear.
 
-3. **Identify the consumer.** Pull an API usage report by user for the last several days (note: exclude any database sync connector like Heroku Connect from this analysis, since that traffic doesn't count against the API limit). Keep in mind these counts typically reset at midnight UTC, so timing matters when reading the numbers. Share a screenshot highlighting whoever is most consumptive.
+3. **Identify the consumer.** Pull an API usage report by user for the last several days (note: exclude any bi-directional database sync connector from this analysis, since that traffic doesn't count against the API limit). Keep in mind these counts typically reset at midnight UTC, so timing matters when reading the numbers. Share a screenshot highlighting whoever is most consumptive.
 
    *Tip: Salesforce Classic supports direct URL access to standard reports using the object's key prefix. The API usage-by-user report can often be reached directly this way if you know the report's internal ID, worth bookmarking once you find it for your org.*
 

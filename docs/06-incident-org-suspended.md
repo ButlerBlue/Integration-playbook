@@ -10,7 +10,7 @@ Account Managers own all client-facing and cross-vendor communication during thi
 
 - **Portal:** members can't sign in, and headquarters staff can't log into their own CRM users.
 - **SSO:** every login attempt fails, since your SSO layer validates against the client's CRM org.
-- **Integrations:** every partner integrator stops receiving traffic. Any middleware sync and any bi-directional database sync connector (e.g., Heroku Connect) stop moving data in both directions.
+- **Integrations:** every partner integrator stops receiving traffic. Any middleware sync and any bi-directional database sync connector stop moving data in both directions.
 - **API:** all inbound and outbound API traffic is rejected.
 
 ## Why This Happens
@@ -32,7 +32,7 @@ Confirm before alerting anyone. Try all of the following and confirm each fails:
 
 If all three fail, notify your internal incident channel so there's a single source of truth, rather than several channels discussing the same event. Something like:
 
-> ⚠️ Urgent, CRM is deactivated for [client org] ⚠️
+> Urgent, CRM is deactivated for [client org]
 > All access is down. Portal logins will fail, and SSO access to any integrator will fail as well.
 >
 > **Support teams:** for incoming requests, respond with a holding message acknowledging the issue is being worked and that you'll follow up with a resolution or timeline.
@@ -43,7 +43,7 @@ If all three fail, notify your internal incident channel so there's a single sou
 
 Then check your internal record of the org's vendor/integration relationships to see who else needs notifying, and alert the headquarters point of contact directly, something like:
 
-> ⚠️ Urgent, CRM is deactivated ⚠️
+> Urgent, CRM is deactivated
 > We're seeing a disabled-org message when attempting to log in. Can you check with your team on whether there's an outstanding invoice with [platform vendor]?
 >
 > As you work toward resolution with your Account Executive, it's worth alerting your other vendors too. We've already notified [vendor/integrator placeholders] on our end, and we see you also work with [additional vendor placeholders].
@@ -61,7 +61,7 @@ Continue monitoring and post updates in the incident channel as the situation de
    - Redeploy dev, UAT, and production environments; if any fail to deploy, loop in engineering support.
 3. **Notify the team:**
 
-> ⚠️ CRM is back online for [client org] ⚠️
+> CRM is back online for [client org]
 > All checks pass and portal deployments are successful.
 >
 > **Support teams:** let anyone who reported issues during the outage know they can try logging in again.

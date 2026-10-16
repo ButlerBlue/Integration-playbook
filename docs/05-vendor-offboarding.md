@@ -8,7 +8,7 @@ Use this process when a client's contract with a vendor is ending and that vendo
 
 2. **Revoke all active OAuth tokens tied to that user, don't stop at deactivation.** OAuth access and refresh tokens exist independently of login state. A refresh token can silently re-authenticate a connection even after the user record is deactivated, so explicit revocation is required to actually close the pathway.
 
-3. **Disable or restrict the vendor's external app/connected app configuration.** Before disabling it outright, confirm it isn't shared with other active integrations or vendors, check with your primary contacts if you're unsure. Disabling a shared app takes down more than the one relationship you intended to close.
+3. **Disable or restrict the vendor's external app configuration.** Before disabling it outright, confirm it isn't shared with other active integrations or vendors, check with your primary contacts if you're unsure. Disabling a shared app takes down more than the one relationship you intended to close.
 
 4. **Determine whether the vendor had SSO/federated identity access, and confirm with the client whether that should be deactivated too.**
    - If yes, submit a request to your identity/platform team including: vendor name, client organization name, the app name or client ID (if known), and the requested deactivation date.
@@ -25,7 +25,7 @@ Use this process when a client's contract with a vendor is ending and that vendo
 
 - Vendor user record(s) deactivated
 - OAuth sessions revoked on all vendor user records
-- External app/connected app disabled or restricted
+- External app disabled or restricted
 - SSO/identity integration status confirmed with client
 - Deactivation request submitted for shared identity app, if applicable
 - All vendor references removed from the client portal

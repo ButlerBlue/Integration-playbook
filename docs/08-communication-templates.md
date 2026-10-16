@@ -6,21 +6,21 @@
 
 ## New Partner Welcome
 
-*Use when a new partner has been formally accepted into your partner program and needs to set up their developer resource center listing.*
+*Use when a new partner has been formally accepted into your partner program and needs to set up their developer portal listing.*
 
 > Welcome officially to the Partner Program, we're excited to have you on board.
 >
-> As a next step, we'd love for you to complete your resource center partner page. This page is visible to current clients and prospects, so it's a great opportunity to showcase your offerings and how best to engage with your team. A few ways to get there:
+> As a next step, we'd love for you to complete your developer portal partner page. This page is visible to current clients and prospects, so it's a great opportunity to showcase your offerings and how best to engage with your team. A few ways to get there:
 >
-> **Fill out our template document.** Once completed, we'll convert it into our resource center format and send it back for your review.
+> **Fill out our template document.** Once completed, we'll convert it into our developer portal format and send it back for your review.
 >
 > **Build it directly.** Prefer to take the reins yourself? Let us know and we'll grant you edit access to your partner page.
 >
 > **Send us your existing content.** If you already have marketing materials, onboarding docs, or a preferred write-up, send them over and we'll incorporate them into the layout for your approval.
 >
-> Before you can access the resource center (including a sample mock-up page), you'll need to create an account with our SSO platform. Once you've done that, send us your login identifier and we'll set up your permissions.
+> Before you can access the developer portal (including a sample mock-up page), you'll need to create an account with our SSO platform. Once you've done that, send us your login identifier and we'll set up your permissions.
 >
-> As a partner, you'll get: a dedicated channel for real-time collaboration and support, enhanced visibility in the resource center, access to integration tools and templates, and marketing mentions across our social, email, and webinar channels.
+> As a partner, you'll get: a dedicated channel for real-time collaboration and support, enhanced visibility in the developer portal, access to integration tools and templates, and marketing mentions across our social, email, and webinar channels.
 >
 > Let us know which option you'd like to move forward with.
 
@@ -93,7 +93,7 @@
 > 1. Register your app using our app registration guide, this establishes your redirect URI and credentials.
 > 2. Implement the OAuth 2.0 flow so users can authenticate and return to your application with a valid session.
 >
-> Our full integration guide in the developer resource center covers the rest, from new user registration through sandbox vs. production environments. Let me know what comes up as you work through it.
+> Our full integration guide in the developer portal covers the rest, from new user registration through sandbox vs. production environments. Let me know what comes up as you work through it.
 
 ## Permission Error Response
 
@@ -136,11 +136,11 @@
 
 *Use before a new client launch, after a partner's major product update, or as part of an annual partner review.*
 
-> Subject: Action Needed: Update Your Resource Center Listing
+> Subject: Action Needed: Update Your Developer Portal Listing
 >
 > Hi [Name],
 >
-> We're reviewing partner documentation in our resource center and want to make sure your listing is current. This page is where clients and prospects learn about your product and integration scope, so keeping it accurate directly affects how you're presented.
+> We're reviewing partner documentation in our developer portal and want to make sure your listing is current. This page is where clients and prospects learn about your product and integration scope, so keeping it accurate directly affects how you're presented.
 >
 > A few things to confirm or update:
 > - Product description and key features, still accurate?

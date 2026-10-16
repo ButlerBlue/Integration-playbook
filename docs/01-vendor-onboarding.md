@@ -1,6 +1,6 @@
 # Third-Party Vendor Access Request
 
-Use this process when a client selects a vendor that does not have a formal partner relationship with your organization, and that vendor needs access to developer resources for an integration.
+Use this process when a client selects a vendor that does not have a formal partner relationship with your organization, and that vendor needs access to developer documentation for an integration.
 
 ## Steps to Take
 
@@ -16,8 +16,8 @@ Use this process when a client selects a vendor that does not have a formal part
 4. **Require the vendor to register for an account with your identity provider** before granting any access. If they already have an account, confirm their identity/ID against your internal record of registered users, and verify the email matches the person requesting access.
 
 5. **Create the vendor's account and contact records in your CRM/admin system:**
-   - Vendor account: record type "Vendor," name, website, partner status set to "None," and a flag enabling access to developer resources.
-   - Vendor contact(s): name, linked account, email (should match their identity-provider account), and any secure credential-exchange handle you use (e.g., Keybase).
+   - Vendor account: record type "Vendor," name, website, partner status set to "None," and a flag enabling access to developer documentation.
+   - Vendor contact(s): name, linked account, email (should match their identity-provider account), and any secure credential-exchange handle you use (e.g., a dedicated encrypted messaging tool).
 
 6. **Create the access/role records linking the vendor to your organization**, then a second role record linking the vendor to the specific client they'll be supporting. Mark both active.
 
@@ -31,7 +31,7 @@ Use this process when a client selects a vendor that does not have a formal part
 - Vendor account record created
 - Vendor contact record(s) created
 - Access role records created and active
-- Developer resources flag enabled
+- Developer documentation flag enabled
 - Vendor notified access is ready
 
 ## Notes / Best Practices
