@@ -47,6 +47,18 @@ This is the check that catches the largest failures.
 4. **Weigh each mismatch by row count.** One parent can carry most of the file. A mismatch on that parent isn't an edge case to load around; it's the blocker.
 5. **Ask the vendor what their live integration writes today,** not what the export contains. If the live integration still sends the old format, map the file back to it. If it has moved to the new format, the existing parent records need updating first, and that update gets sequenced deliberately, in sandbox, before any child history loads.
 
+6. **Confirm every referenced key resolves to exactly one parent.** Presence and format aren't enough. An external ID field that isn't marked Unique can hold the same value on two records, most often after a vendor resends or re-creates parent records in an org that already had them. When that happens, every child row pointing at the duplicated value fails on the upsert. Count instead of eyeballing:
+
+   ```sql
+   SELECT Vendor_Id__c, COUNT(Id)
+   FROM Course__c
+   WHERE Vendor_Id__c IN ('1001', '1001:1001', '1002:1005')
+   GROUP BY Vendor_Id__c
+   ```
+
+   You want one row back per value you referenced, each with a count of 1. A value that doesn't come back is a missing parent. A count above 1 is a duplicate to resolve before any child loads.
+7. **Look in the right direction.** A blank external ID on a parent record the file never references is harmless. The question that matters is whether every value the file does reference resolves cleanly, so scope the query to the file's distinct keys rather than scanning the whole object for blanks.
+
 Apply the same check one object over. If a second child file references a different parent object, run the same query against that parent before releasing it.
 
 ## Step 4: Check Dates and Time Zones
@@ -106,6 +118,7 @@ Send the vendor every open question in one message, numbered, with the evidence 
 | External ID field missing in the target org | Every row fails | Step 1 |
 | Namespace prefix on an unpackaged field | Every row fails on header mapping | Step 2 |
 | Vendor ID format changed over time | Child rows fail to find their parent, often most of the file | Step 3 |
+| Duplicate external ID on a parent after a vendor resend | Every child row pointing at that parent fails on the upsert | Step 3 |
 | UTC vs. local assumption wrong | Dates silently one day off | Step 4 |
 | Vendor's internal ID in a record ID column | Rows fail, or worse, get hand-matched to the wrong person | Step 5 |
 | Missing required values | Rows rejected | Step 6 |

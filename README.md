@@ -28,6 +28,8 @@ More background on how I think about this work: [Portfolio](https://butlerblue.g
 | [Runbook: Records Missing from an Incremental Sync](docs/10-runbook-records-missing-from-sync.md) | Diagnosing records that never sync and never error, and fixing them safely without tripping automation or API limits. |
 | [Runbook: Pre-Load Checks for a Historical Data Load](docs/11-runbook-historical-data-load.md) | Verifying a vendor's history file before it goes into the CRM: upsert keys, parent key formats, time zones, and a clean ready, held, and dropped split. |
 | [Retiring the OAuth Implicit Flow](docs/12-retiring-oauth-implicit-flow.md) | Scoping, inventorying, and communicating a move from the implicit flow to authorization code with PKCE, including vendor and client message templates. |
+| [Leading an Integration Fleet Through a Platform OAuth Enforcement Change](docs/13-platform-oauth-enforcement-fleet-migration.md) | Running the program when the CRM platform tightens how outside apps sign in: exposure by sign-in pattern, ownership, one-at-a-time cutover, and leadership status reporting. |
+| [Governing Interim Workarounds](docs/14-interim-workaround-governance.md) | Keeping a manual workaround a bridge with an end date: root cause first, workaround types, ownership lines, and closing it out when the fix ships. |
 
 ## Templates
 
@@ -37,6 +39,7 @@ Fill-in documents that put the playbook into practice.
 |---|---|
 | [Integration Scope Document](templates/integration-scope-document.md) | Scoping a third-party integration field by field before anything is provisioned: approvals, auth, data scope, identifiers, responsibilities, cutover. |
 | [Scoped Working Session Agenda](templates/scoped-working-session-agenda.md) | Turning "can we hop on a call?" into a focused session, with the invitation, agenda, and same-day recap. |
+| [Defect Escalation Brief](templates/defect-escalation-brief.md) | Reporting an integration defect so it gets prioritized on the first read: traced case, confirmed cases, exposure, and numbered questions for the product owner. |
 
 ## Claude Skills
 
