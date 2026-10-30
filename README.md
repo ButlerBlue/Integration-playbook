@@ -16,13 +16,13 @@ More background on how I think about this work: [Portfolio](https://butlerblue.g
 
 | Page | What it covers |
 |---|---|
-| [Vendor Onboarding](docs/01-vendor-onboarding.md) | Granting a client-selected, non-partner vendor access to developer resources, with proper consent and recordkeeping. |
+| [Vendor Onboarding](docs/01-vendor-onboarding.md) | Granting a client-selected, non-partner vendor access to developer documentation, with proper consent and recordkeeping. |
 | [Custom Application Requests](docs/02-custom-application-requests.md) | How to respond when a parent organization or local branch wants to connect a custom-built or independent-developer app, including ready-to-use messaging templates. |
 | [Third-Party Integrator Security Playbook](docs/03-integrator-security-playbook.md) | The full framework for provisioning, scoping, and securing third-party API access: the responsibility line, OAuth flow selection, least-privilege permissioning, and escalation philosophy. |
 | [Configuring an API-Only Integration User](docs/04-api-only-user-setup.md) | Step-by-step Salesforce configuration reference for the API-only integration user license type. Pairs with the security playbook above. |
 | [Vendor and Integration Offboarding](docs/05-vendor-offboarding.md) | Fully terminating a vendor's access when a client relationship ends: deactivation, token revocation, and closing every layer, not just the login. |
 | [Incident Runbook: Org Suspended or Disabled](docs/06-incident-org-suspended.md) | What to do when a client's CRM production environment gets locked, most often a billing issue, and how to safely bring integrations back online afterward. |
-| [Responding to an API Limit Alert](docs/07-api-limit-alert-response.md) | Identifying and resolving runaway API consumption before it takes an entire org offline. |
+| [Responding to an API Limit Alert](docs/07-api-limit-alert-response.md) | Confirming which limit was actually hit, then identifying and resolving runaway API consumption before it takes an entire org offline. |
 | [Partner Communication Templates](docs/08-communication-templates.md) | Reusable email templates for partner onboarding, OAuth troubleshooting, permission errors, overconsumption notices, and support case redirects. |
 | [Identity Keys vs. Record Keys](docs/09-identity-vs-record-keys.md) | Why an SSO integration needs two identifiers, one to authenticate and one to match records, and why email should never be either. |
 | [Runbook: Records Missing from an Incremental Sync](docs/10-runbook-records-missing-from-sync.md) | Diagnosing records that never sync and never error, and fixing them safely without tripping automation or API limits. |
@@ -31,6 +31,8 @@ More background on how I think about this work: [Portfolio](https://butlerblue.g
 | [Leading an Integration Fleet Through a Platform OAuth Enforcement Change](docs/13-platform-oauth-enforcement-fleet-migration.md) | Running the program when the CRM platform tightens how outside apps sign in: exposure by sign-in pattern, ownership, one-at-a-time cutover, and leadership status reporting. |
 | [Governing Interim Workarounds](docs/14-interim-workaround-governance.md) | Keeping a manual workaround a bridge with an end date: root cause first, workaround types, ownership lines, and closing it out when the fix ships. |
 | [Debugging Authorization Code + PKCE Flows](docs/15-debugging-oauth-pkce-flows.md) | The specific errors you hit testing an OAuth 2.0 Authorization Code flow with PKCE against a platform's native OAuth endpoint, decoded, plus how to configure an OAuth-aware API client so you stop hand-building the requests that cause them. |
+| [Partner Integration Intake](docs/16-partner-integration-intake.md) | One front door per request type, readiness gates before anything is scheduled, handling requests that arrive around intake, and making intake delays visible to leadership. |
+| [Runbook: Authentication Failures Isolated to One Org](docs/17-runbook-auth-failures-one-org.md) | Deciding whether intermittent `invalid_grant` errors are one org's problem or a fleet-wide change, then diagnosing the user, the app record, and the fix. |
 
 ## Templates
 
@@ -41,6 +43,7 @@ Fill-in documents that put the playbook into practice.
 | [Integration Scope Document](templates/integration-scope-document.md) | Scoping a third-party integration field by field before anything is provisioned: approvals, auth, data scope, identifiers, responsibilities, cutover. |
 | [Scoped Working Session Agenda](templates/scoped-working-session-agenda.md) | Turning "can we hop on a call?" into a focused session, with the invitation, agenda, and same-day recap. |
 | [Defect Escalation Brief](templates/defect-escalation-brief.md) | Reporting an integration defect so it gets prioritized on the first read: traced case, confirmed cases, exposure, and numbered questions for the product owner. |
+| [Weekly Integration Status Report](templates/weekly-integration-status-report.md) | A weekly upward update built to be forwarded unedited: outcomes, decisions made, and open items measured against their dates. |
 
 ## Claude Skills
 
