@@ -30,6 +30,7 @@ More background on how I think about this work: [Portfolio](https://butlerblue.g
 | [Retiring the OAuth Implicit Flow](docs/12-retiring-oauth-implicit-flow.md) | Scoping, inventorying, and communicating a move from the implicit flow to authorization code with PKCE, including vendor and client message templates. |
 | [Leading an Integration Fleet Through a Platform OAuth Enforcement Change](docs/13-platform-oauth-enforcement-fleet-migration.md) | Running the program when the CRM platform tightens how outside apps sign in: exposure by sign-in pattern, ownership, one-at-a-time cutover, and leadership status reporting. |
 | [Governing Interim Workarounds](docs/14-interim-workaround-governance.md) | Keeping a manual workaround a bridge with an end date: root cause first, workaround types, ownership lines, and closing it out when the fix ships. |
+| [Debugging Authorization Code + PKCE Flows](docs/15-debugging-oauth-pkce-flows.md) | The specific errors you hit testing an OAuth 2.0 Authorization Code flow with PKCE against a platform's native OAuth endpoint, decoded, plus how to configure an OAuth-aware API client so you stop hand-building the requests that cause them. |
 
 ## Templates
 
