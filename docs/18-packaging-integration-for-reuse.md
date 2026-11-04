@@ -146,10 +146,10 @@ A real integration frequently needs a field or object that belongs to the host p
 
 The correct fix is declaring the other package as an explicit **dependency**, so the build environment has it available and the reference resolves instead of failing. This requires the exact **Subscriber Package Version ID** (an `04t...` value) of the package you depend on; there's no way to declare this kind of cross-publisher dependency by namespace and a version label alone, the platform needs the specific ID.
 
-You don't need the package's owner to hand you that ID. If you already have API access to any org that has the dependency installed, which you will, since that's the org your integration already targets, you can query it yourself:
+You don't need the package's owner to hand you that ID. If you already have API access to any org that has the dependency installed, which you will, since that's the org your integration already targets, you can query it yourself. `InstalledSubscriberPackage` lives only in the Tooling API, not the standard API the CLI queries by default, so the query needs the tooling flag or it comes back as an unsupported sObject rather than a normal query error:
 
 ```bash
-sf data query --target-org SourceOrg --query \
+sf data query --use-tooling-api --target-org SourceOrg --query \
   "SELECT SubscriberPackageVersionId, SubscriberPackage.Name \
    FROM InstalledSubscriberPackage \
    WHERE SubscriberPackage.NamespacePrefix = 'hostcrm'"
