@@ -38,6 +38,37 @@ The trap: if your test user has both permission sets assigned at once, which is 
 
 Audit each permission set against what actually uses it, not against what a stacked test user can see. If the integration code resolves a person by an identifier field, the API permission set needs read access to that field directly, independent of whatever the admin-facing permission set separately grants.
 
+### Leave the License Field Empty on the API-Facing Permission Set
+
+Salesforce has a dedicated user license for exactly this kind of identity, called **Salesforce Integration**. It's API-only, it can't log into the UI, and that's what an integration user should look like, so it's a good choice for the user. The trap is in the permission set. Every permission set has an optional **License** field (`<license>` in its metadata), and it feels tidy to set it to Salesforce Integration on the API-facing permission set so it matches the user it's built for.
+
+Don't. A permission set tied to the Salesforce Integration user license can only carry what that license allows by itself, and that doesn't include standard CRM objects like Account and Contact. The deploy doesn't fail. Salesforce accepts the file, quietly drops the standard-object grants, and keeps everything else. The integration user then can't read the Contacts it's supposed to match against, which surfaces later as a matching failure that looks like an identity problem rather than a permissions one.
+
+For a Salesforce Integration user, standard-object access comes from a separate **permission set license** called **Salesforce API Integration**, assigned on the user record (in Setup, open the user and use the Permission Set License Assignments related list). The full setup:
+
+- **The integration user** holds the Salesforce Integration user license plus the Salesforce API Integration permission set license.
+- **The API-facing permission set** has no License value. Some guides suggest setting it to Salesforce API Integration instead, but leaving it empty is the more common recommendation, and it's the option that doesn't tie your permission set to a license every client org has to provision.
+- **The admin-facing permission set** has no License value either. Setting it to the integration license would make it impossible to assign to any human user, since nobody browsing the UI can hold an API-only license.
+
+If you've already deployed a permission set with the license set, remove the `<license>` line, deploy again, and retrieve to confirm it's gone. Don't assume a deploy can change the license on a permission set that already exists. If the retrieved file still shows it, delete the permission set in a sandbox (unassign it from users first), redeploy it without the license, and reassign it.
+
+#### How It Shows Up: Run a Round-Trip Diff
+
+The tell is a permission set that reports **Changed** on every single deploy, even when nobody has edited it. That's the org telling you the file you sent and the version it kept don't match. To see exactly where they differ, commit your local files, then deploy, retrieve the same components back, and diff:
+
+```bash
+sf project deploy start --target-org SourceOrg --source-dir force-app
+sf project retrieve start --target-org SourceOrg --metadata \
+  PermissionSet:GiveAGrant_API_Access \
+  PermissionSet:GiveAGrant_Platform_Access \
+  Profile:"GiveAGrant Integration User"
+git diff force-app/main/default
+```
+
+Read the diff in two directions. **Removals** are grants the org refused to keep, and each one needs an explanation. A license restriction like the one above is the most likely cause. **Additions** are usually harmless: settings the org created on its own that your local copy never had, such as tab visibility entries on a profile. Keep those so the next diff starts clean.
+
+Don't use the retrieve command's own status column for this. In practice it can flag every file it writes as Changed, including files whose content didn't change at all. In one real run it marked all 113 retrieved files as Changed while the diff showed real differences in only a handful. The diff is the test.
+
 ## Matching People Across Systems, and What Happens When You Can't
 
 This playbook already has a full treatment of identity matching in [Identity Keys vs. Record Keys](09-identity-vs-record-keys.md): use a durable, platform-issued identifier as the primary match key, fall back to email only for the remainder, and never fall back to name. That guidance holds unchanged when the matching happens inside a packaged integration rather than custom code you wrote yourself.
@@ -191,6 +222,7 @@ The first client is always the expensive one. The point of packaging it is to ma
 
 - Every field and object permission in the package is something the integration's code actually reads or writes; anything defensive or "just in case" has been removed
 - The API-facing permission set and the admin-facing permission set are separate, and each has been tested in isolation, not as a stacked test user
+- Neither permission set has a License value; the integration user holds the Salesforce API Integration permission set license; and a deploy, retrieve, and diff of both permission sets comes back with nothing removed
 - No unmatched external record is ever linked to a shared placeholder; the lookup is left null with a visible flag field instead
 - Parent-child relationships are created through the relationship name and the parent's External ID, not a stored Salesforce record ID
 - Test cycles that reuse External ID values permanently purge the Recycle Bin, not just delete
