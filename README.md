@@ -34,6 +34,7 @@ More background on how I think about this work: [Portfolio](https://butlerblue.g
 | [Partner Integration Intake](docs/16-partner-integration-intake.md) | One front door per request type, readiness gates before anything is scheduled, handling requests that arrive around intake, and making intake delays visible to leadership. |
 | [Runbook: Authentication Failures Isolated to One Org](docs/17-runbook-auth-failures-one-org.md) | Deciding whether intermittent `invalid_grant` errors are one org's problem or a fleet-wide change, then diagnosing the user, the app record, and the fix. |
 | [Packaging a Partner Integration into a Reusable Salesforce Package](docs/18-packaging-integration-for-reuse.md) | Turning a hand-configured integration into an installable Unlocked Package: pruning unused grants, splitting the permission set by who uses it, external ID relationships, the Recycle Bin's effect on unique fields, API limits vs. storage limits, and declaring a dependency on a package you don't own. |
+| [Vendor Change Requests in a Client Org](docs/19-vendor-change-requests-in-client-orgs.md) | Who decides when a vendor asks to change a client's configuration or refresh a sandbox mid-investigation, what a complete request contains, the narrow production exception, and treating sandbox parity as an operating standard. |
 
 ## Templates
 
@@ -45,6 +46,7 @@ Fill-in documents that put the playbook into practice.
 | [Scoped Working Session Agenda](templates/scoped-working-session-agenda.md) | Turning "can we hop on a call?" into a focused session, with the invitation, agenda, and same-day recap. |
 | [Defect Escalation Brief](templates/defect-escalation-brief.md) | Reporting an integration defect so it gets prioritized on the first read: traced case, confirmed cases, exposure, and numbered questions for the product owner. |
 | [Weekly Integration Status Report](templates/weekly-integration-status-report.md) | A weekly upward update built to be forwarded unedited: outcomes, decisions made, and open items measured against their dates. |
+| [Vendor Change Authorization](templates/vendor-change-authorization.md) | Recording a vendor's configuration change or sandbox refresh request: who decided, the before and after values, the reversal plan, and independent confirmation. |
 
 ## Claude Skills
 
