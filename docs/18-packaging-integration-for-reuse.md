@@ -25,6 +25,17 @@ Two things to check with equal care, but that often turn out differently:
 
 Don't apply the same fix to both. The build error looks identical either way; the correct response does not.
 
+### Derive the Grants From an Inventory of Calls
+
+The fastest way to settle what a permission set needs is to stop debating it field by field and ask the integrator for an inventory: every query the integration runs, with the exact fields it selects and filters on, every write with its HTTP method and endpoint, and any metadata calls such as `describe`. A good inventory takes the integrator an hour to write and replaces weeks of guessing. Derive each grant from it:
+
+- **Reads** need object Read plus field-level Read on every field a query selects or filters on. A query that names a field the user can't see fails outright with a `No such column` error, so gaps here are loud, not silent.
+- **Create-only writes** need object Read and Create, nothing more. Edit, Delete, Modify All and View All are all unnecessary if the integration never updates or deletes. Field-level Edit is still needed on every field the integration sets, because field-level Edit is what allows a value to be set on create, not just on update.
+- **Record sharing** decides whether object permissions are enough. An object's internal sharing default (`sharingModel` in its metadata) governs internal users, and an integration user counts as internal, so a Public Read/Write default already lets it see and edit every record without Modify All. The external sharing default (`externalSharingModel`) only governs external users, such as people logging in through a customer site, and Private is usually right there.
+- **System permissions** follow the same rule. Apex REST Services, for example, only matters if the integration calls custom Apex REST endpoints, not Salesforce's standard REST API.
+
+One caution about the permission set that already works in the org. A hand-built set assigned to the integration user months ago is the best evidence you have of what that kind of user can hold, and it's worth retrieving and comparing (see the license section below). It is rarely the right shape to package, though. Hand-built sets tend to grant full access plus Modify All, app and record type visibility, and fields the code never touches. Use it to answer "what works for this kind of user," then take the actual grants from the inventory.
+
 ## Split the Permission Set by Who's Using It
 
 Most integrations need two kinds of access, and conflating them into one permission set hides gaps until they surface in production:
@@ -50,7 +61,9 @@ For a Salesforce Integration user, standard-object access comes from a separate 
 - **The API-facing permission set** has no License value. Some guides suggest setting it to Salesforce API Integration instead, but leaving it empty is the more common recommendation, and it's the option that doesn't tie your permission set to a license every client org has to provision.
 - **The admin-facing permission set** has no License value either. Setting it to the integration license would make it impossible to assign to any human user, since nobody browsing the UI can hold an API-only license.
 
-If you've already deployed a permission set with the license set, remove the `<license>` line, deploy again, and retrieve to confirm it's gone. Don't assume a deploy can change the license on a permission set that already exists. If the retrieved file still shows it, delete the permission set in a sandbox (unassign it from users first), redeploy it without the license, and reassign it.
+If you've already deployed a permission set with the license set, removing the `<license>` line and deploying again won't fix it. Salesforce keeps the license on a permission set that already exists, and the next retrieve brings the line straight back. The fix is to delete the permission set in a sandbox (unassign it from every user first), redeploy it without the license, and reassign it. Any package version you built while the license was there still carries it, so build a new version after the fix and don't install the old one anywhere.
+
+Once the license is gone, put standard-object read access and the API Enabled system permission in the permission set itself, not the profile. While the license is on, Salesforce won't let the permission set hold either one, and the tempting workaround is to grant them through the integration user's profile instead. That works in the org where you set it up and nowhere else predictably: the permission set travels with your package, while the profile is whatever each client's admin happens to assign, and the integration user may not even be on the profile your package ships. If you want proof before you commit, retrieve the permission set that already works for that same user and compare. A working set with no License value that still carries standard-object access and API Enabled for an API-only user settles the question.
 
 #### How It Shows Up: Run a Round-Trip Diff
 
@@ -74,6 +87,13 @@ Don't use the retrieve command's own status column for this. In practice it can 
 This playbook already has a full treatment of identity matching in [Identity Keys vs. Record Keys](09-identity-vs-record-keys.md): use a durable, platform-issued identifier as the primary match key, fall back to email only for the remainder, and never fall back to name. That guidance holds unchanged when the matching happens inside a packaged integration rather than custom code you wrote yourself.
 
 One addition worth calling out on its own, because it's easy to miss until a client asks about it directly: **don't invent a placeholder record for unmatched people.** It's tempting, every applicant needs *something* in the lookup field, and a single "Unmatched" record feels like a clean way to satisfy a required relationship. It isn't. If ten different unmatched applicants all point at the same placeholder, any report or rollup built on that record now silently represents ten unrelated people as one. Leave the lookup null instead, store the external system's own identifier and email as plain reference fields alongside it, and expose a boolean or formula field flagging "no match found" so a client can find and reconcile the exceptions themselves. A null relationship is honest about what the integration doesn't know. A placeholder record hides it behind something that looks like data.
+
+A second matching failure is just as quiet, and it depends on each client's org rather than your code. Matching queries run with the integration user's record visibility. If a client's sharing settings keep Contacts private, the queries don't error, they simply return no rows, and every person lands in the "no match found" bucket with nothing to tell you why. There are two ways to make this predictable:
+
+- **Grant View All Records on Contact** in the API-facing permission set. Matching then works regardless of each org's sharing settings, and field-level security still limits the integration to the handful of Contact fields it actually reads.
+- **Make Contact visibility an onboarding step.** Confirm the integration user can see every Contact in each org before the first export. This keeps a broad grant out of your package, which some security reviewers prefer.
+
+The first is self-contained. The second puts the check on the people doing onboarding, so it only works if it's written down where they'll see it.
 
 ## Referencing a Parent Record by External ID, Not Internal ID
 
@@ -212,6 +232,10 @@ With that ID, add it to `sfdx-project.json` as a named alias, then reference the
 
 Pin this to whatever minimum version actually carries the field you depend on, not to the exact build installed in the one org you tested against. Salesforce's own install-time check enforces "the target org must be at this version or newer," so a reasonable floor covers every client that's current or ahead, and a client genuinely behind that floor gets a clear, correct failure telling them to update the other package first, rather than a confusing error from your integration's own code.
 
+Declaring the dependency has a consequence worth stating plainly to everyone involved: the package now installs only into orgs that already have the host package. That's correct if every client runs on the host platform. If the integrator also serves Salesforce orgs without it, split the work into two packages. A base package carries the integrator's own objects and permissions and installs anywhere. A small extension package depends on both the base and the host package and adds only the host-specific pieces, such as read access to the host's identity field. Unlocked packages can depend on each other, so each client installs exactly the layers that apply to them.
+
+The same split shows up at the field level on the host's own objects. Fields that carry the host package's namespace prefix (say `hostcrm__`), like `hostcrm__Member__c.hostcrm__Status__c`, ship with that package and can be referenced once the dependency is declared. Fields with no prefix on the same object, like `hostcrm__Member__c.Years_Active__c`, were created in one client's org and won't exist anywhere else, so a package that references them fails to build. If an integration genuinely needs one, keep it in a small org-local permission set assigned alongside the package's own, never in the package.
+
 ## What This Buys You
 
 None of the fixes above are expensive individually. What they add up to is the difference between an integration that one engineer can reason about in one org, and one that installs, predictably, into the next client's org without a repeat of the original conversation. The permission-set split means a client's security review has a clean, minimal artifact to look at instead of a grant list built up over months of "just in case." The external ID pattern means onboarding a new client never involves hand-mapping internal record IDs. The dependency declaration means the package tells you, at build time, exactly what the target org needs before it, instead of failing at runtime in a way that looks like your own bug.
@@ -221,13 +245,16 @@ The first client is always the expensive one. The point of packaging it is to ma
 ## Pre-Ship Checklist
 
 - Every field and object permission in the package is something the integration's code actually reads or writes; anything defensive or "just in case" has been removed
+- Grants were derived from the integrator's inventory of queries and writes; a create-only integration has object Read and Create, plus field-level Edit only on the fields it sets
 - The API-facing permission set and the admin-facing permission set are separate, and each has been tested in isolation, not as a stacked test user
-- Neither permission set has a License value; the integration user holds the Salesforce API Integration permission set license; and a deploy, retrieve, and diff of both permission sets comes back with nothing removed
+- Neither permission set has a License value (one that was ever deployed with a license was deleted and recreated, not edited); standard-object read and API Enabled live in the permission set, not the profile; the integration user holds the Salesforce API Integration permission set license; and a deploy, retrieve, and diff of both permission sets comes back with nothing removed
 - No unmatched external record is ever linked to a shared placeholder; the lookup is left null with a visible flag field instead
+- The integration user can see every record it matches against in each client org, either through View All Records in the permission set or through a verified onboarding step
 - Parent-child relationships are created through the relationship name and the parent's External ID, not a stored Salesforce record ID
 - Test cycles that reuse External ID values permanently purge the Recycle Bin, not just delete
 - `STORAGE_LIMIT_EXCEEDED` and `REQUEST_LIMIT_EXCEEDED` are never treated as the same problem
 - `CustomTab` metadata is retrieved explicitly for every object a human needs to browse
 - Any dependency on another package's field is declared in `sfdx-project.json` against a Subscriber Package Version ID, pinned to a sensible minimum, never deleted to make a build pass
+- Everyone involved knows the package now installs only where that dependency exists, and the package references no field that lacks the host's namespace prefix
 
 Pairs with [Identity Keys vs. Record Keys](09-identity-vs-record-keys.md) and the [Third-Party Integrator Security Playbook](03-integrator-security-playbook.md).
