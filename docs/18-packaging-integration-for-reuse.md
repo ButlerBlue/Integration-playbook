@@ -82,6 +82,19 @@ Read the diff in two directions. **Removals** are grants the org refused to keep
 
 Don't use the retrieve command's own status column for this. In practice it can flag every file it writes as Changed, including files whose content didn't change at all. In one real run it marked all 113 retrieved files as Changed while the diff showed real differences in only a handful. The diff is the test.
 
+### Confirm Which User the Connection Actually Runs As
+
+A permission set only proves something when it's tested on the user the integration really runs as, holding the license your clients will really use. That's easy to get wrong without noticing, because the authentication flow quietly picks the user for you.
+
+An integration built on the Authorization Code flow (a browser sign-in that hands back a refresh token) can only run as a user who can reach Salesforce's sign-in and consent screen. An API-only integration user can't. So during the build, the connection drifts onto whatever test user was able to sign in, usually one on a full license, and every permission test from then on validates the wrong license. The API-only user you provisioned sits unused, and nobody notices until the package is close to shipping. Given how differently the two licenses treat the same permission set (see the license section above), passing tests on the wrong one proves very little.
+
+Two signals that this has happened:
+
+- **The integrator stores a refresh token per org**, or is planning a "get a new token" or "reconnect" button in their admin screen. An unattended server-to-server sync shouldn't ever need a person to sign in again.
+- **The user on the connection isn't the API-only user you set up.** Ask the integrator which username their stored credentials belong to, or check Login History for whose API logins are actually arriving.
+
+The fix is to change the flow before you finish testing, not after. Move the integration to the Client Credentials flow with the API-only integration user as the app's run-as user (setup details in [Debugging Authorization Code + PKCE](15-debugging-oauth-pkce-flows.md#when-the-connecting-user-cant-reach-a-login-screen-client-credentials-flow)). The integrator then stores only the org's My Domain address, the client ID and the secret, there's no refresh token to expire or rotate, and every test from then on runs as the user your clients will actually provision. Enabling Client Credentials on the app adds a flow rather than replacing one, so the existing connection can keep running while the integrator switches; confirm that in a sandbox before relying on it.
+
 ## Matching People Across Systems, and What Happens When You Can't
 
 This playbook already has a full treatment of identity matching in [Identity Keys vs. Record Keys](09-identity-vs-record-keys.md): use a durable, platform-issued identifier as the primary match key, fall back to email only for the remainder, and never fall back to name. That guidance holds unchanged when the matching happens inside a packaged integration rather than custom code you wrote yourself.
@@ -247,6 +260,7 @@ The first client is always the expensive one. The point of packaging it is to ma
 - Every field and object permission in the package is something the integration's code actually reads or writes; anything defensive or "just in case" has been removed
 - Grants were derived from the integrator's inventory of queries and writes; a create-only integration has object Read and Create, plus field-level Edit only on the fields it sets
 - The API-facing permission set and the admin-facing permission set are separate, and each has been tested in isolation, not as a stacked test user
+- Testing ran as the API-only integration user your clients will provision, connected through Client Credentials, not as a test user that could sign in through a browser
 - Neither permission set has a License value (one that was ever deployed with a license was deleted and recreated, not edited); standard-object read and API Enabled live in the permission set, not the profile; the integration user holds the Salesforce API Integration permission set license; and a deploy, retrieve, and diff of both permission sets comes back with nothing removed
 - No unmatched external record is ever linked to a shared placeholder; the lookup is left null with a visible flag field instead
 - The integration user can see every record it matches against in each client org, either through View All Records in the permission set or through a verified onboarding step
