@@ -66,7 +66,9 @@ Getting this wrong is expensive in both directions. Treating a local problem as 
 
 6. **Check the app record.** Open the external app the vendor signs in through and confirm its OAuth policies are actually configured: which users are permitted, IP relaxation, and token policies. An app record created in a hurry, or migrated from an older app type, can be missing its policy configuration entirely. Confirm the integration user's profile or permission set is assigned to the app.
 
-7. **Write down what you confirmed and what you are inferring.** "Login history shows `Invalid Password` at three of five reported times" is a finding. "Probably the token" is a theory.
+7. **If the vendor signs in with a refresh token, count the user's approvals on the app.** Every browser sign-in creates a separate, additional approval for that user and app. It doesn't replace the earlier ones, which keep working. Salesforce allows five approvals per user per app, and a sixth sign-in silently revokes the oldest. So if the vendor's staging, development and production environments (or several of their workers) each signed in as the same integration user, a routine "reconnect" in one environment can knock out the token another environment still depends on. That environment then starts failing with `invalid_grant` even though nothing changed on its side. Ask the vendor whether anyone reconnected recently, anywhere, and check the user's approvals in Setup under External Client App OAuth Usage.
+
+8. **Write down what you confirmed and what you are inferring.** "Login history shows `Invalid Password` at three of five reported times" is a finding. "Probably the token" is a theory.
 
 ## Fix
 
@@ -74,12 +76,13 @@ Getting this wrong is expensive in both directions. Treating a local problem as 
 2. **Deliver any new credential over your secure credential-exchange channel only.** Never email, chat, or a ticket.
 3. **Do it in a sandbox first when the change touches shared configuration.** A policy change on an app used by more than one integration affects all of them.
 4. **Watch login history for the integration user** for an hour after the change. A clean run of successful logins at the vendor's normal interval is a good early sign, not proof.
+5. **When the fix involves a new sign-in, revoke the token it replaced.** Re-authorizing doesn't retire the previous refresh token. It stays valid until someone revokes it, it goes unused for 30 days, the app's refresh token policy expires it, or newer sign-ins push it past the five-approval limit. Until then it's a working credential nobody is tracking. Have the vendor revoke it with a POST to the org's My Domain address plus `/services/oauth2/revoke`, sending `token` set to the old refresh token, or revoke it yourself from External Client App OAuth Usage. Refresh token rotation, where it's switched on, is a different mechanism: each refresh returns a new refresh token and invalidates the one just used, so a vendor that doesn't save the new token breaks on its next refresh.
 
 ## Close It Out
 
 1. **Ask the vendor to watch their side for a defined period,** for example a day or two of normal runs, and to report any recurrence with timestamps. Intermittent problems need a longer quiet period before they are resolved.
 2. **Close it only after that period passes cleanly,** and record the root cause in one paragraph on the ticket.
-3. **Make this org a first candidate to move off password-based sign-in.** If the integration still uses username, password, and security token, a flaky connection is the best argument for migrating it first to Client Credentials or JWT Bearer, which remove the password dependency entirely. See [Configuring an API-Only Integration User](04-api-only-user-setup.md).
+3. **Make this org a first candidate to move off password-based sign-in.** If the integration still uses username, password, and security token, or a refresh token that a person has to re-issue by signing in, a flaky connection is the best argument for migrating it first to Client Credentials or JWT Bearer. Both remove the password dependency entirely, and neither leaves a stored refresh token to expire, rotate or get pushed out by a newer sign-in. See [Configuring an API-Only Integration User](04-api-only-user-setup.md).
 4. **Check the rest of the fleet for the same gap.** If the cause was a missing app policy or a password-expiry setting, query the other orgs for the same configuration before it surfaces as the next ticket.
 
 ## Common Failure Modes
@@ -92,6 +95,8 @@ Getting this wrong is expensive in both directions. Treating a local problem as 
 | Fleet query handed off untested | Round trip lost to a query error | Diagnose, step 3 |
 | Several changes made at once | Nobody knows what fixed it, or what to check next time | Fix, step 1 |
 | New credential sent by email | Credential exposure on top of the original issue | Fix, step 2 |
+| A vendor reconnects in one environment | A sixth approval silently revokes the oldest token, and another environment on the same integration user starts failing | Diagnose, step 7 |
+| Old refresh token left live after a reconnect | A working credential nobody is tracking | Fix, step 5 |
 | Closed after one clean hour | Recurrence reopens the ticket and costs credibility | Close It Out |
 | Same gap left in other orgs | The next ticket is the same ticket | Close It Out, step 4 |
 
