@@ -249,6 +249,20 @@ Declaring the dependency has a consequence worth stating plainly to everyone inv
 
 The same split shows up at the field level on the host's own objects. Fields that carry the host package's namespace prefix (say `hostcrm__`), like `hostcrm__Member__c.hostcrm__Status__c`, ship with that package and can be referenced once the dependency is declared. Fields with no prefix on the same object, like `hostcrm__Member__c.Years_Active__c`, were created in one client's org and won't exist anywhere else, so a package that references them fails to build. If an integration genuinely needs one, keep it in a small org-local permission set assigned alongside the package's own, never in the package.
 
+## Taking a Client Org Live
+
+Production is a separate org with its own app, its own credentials and its own integration user, and nothing configured in the sandbox carries over. The cheapest go-live is one where all of that was set up long before anyone flips the switch.
+
+1. **Configure production's authentication when you finish the sandbox's, not on go-live day.** Same flow, same run-as pattern, with production's own API-only integration user as the run-as user. Go-live then becomes a credential swap instead of a configuration change made under time pressure.
+2. **Treat every environment's credentials as separate.** Each org has its own My Domain address, client ID, secret and run-as user, and sandbox values never work in production. Have the integrator store test and live values separately, and deliver production's over your secure credential-exchange channel like any other secret.
+3. **Go live in a fixed order.**
+   1. Install the exact package version that passed isolation testing in the sandbox.
+   2. Confirm production's integration user has its permission set license and the API-facing permission set assigned.
+   3. Have the integrator enter the live credentials and request a token.
+   4. Run one read query and one small real export, check the records, and only then turn the integration on for the client.
+4. **Don't carry sandbox scaffolding into production.** If the sandbox kept an older hand-built permission set around while testing, or anyone used an admin to get unblocked, none of that gets recreated in production. Production starts on the packaged permission set alone, so it matches what you tested in isolation.
+5. **Rotate secrets per environment.** A sandbox secret that was exposed during testing gets rotated in the sandbox. Production's secret is new and stays out of email, screenshots and tickets from day one.
+
 ## What This Buys You
 
 None of the fixes above are expensive individually. What they add up to is the difference between an integration that one engineer can reason about in one org, and one that installs, predictably, into the next client's org without a repeat of the original conversation. The permission-set split means a client's security review has a clean, minimal artifact to look at instead of a grant list built up over months of "just in case." The external ID pattern means onboarding a new client never involves hand-mapping internal record IDs. The dependency declaration means the package tells you, at build time, exactly what the target org needs before it, instead of failing at runtime in a way that looks like your own bug.
@@ -270,5 +284,6 @@ The first client is always the expensive one. The point of packaging it is to ma
 - `CustomTab` metadata is retrieved explicitly for every object a human needs to browse
 - Any dependency on another package's field is declared in `sfdx-project.json` against a Subscriber Package Version ID, pinned to a sensible minimum, never deleted to make a build pass
 - Everyone involved knows the package now installs only where that dependency exists, and the package references no field that lacks the host's namespace prefix
+- Production's app already has Client Credentials and its run-as user configured, its credentials were delivered securely and stored separately from the sandbox's, and go-live follows the fixed order: install the tested version, assign the API permission set, test the connection, then one small real export
 
 Pairs with [Identity Keys vs. Record Keys](09-identity-vs-record-keys.md) and the [Third-Party Integrator Security Playbook](03-integrator-security-playbook.md).
