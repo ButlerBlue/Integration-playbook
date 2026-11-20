@@ -58,6 +58,7 @@ What to expect from the response, and what to build around it:
 - **There's no refresh token, by design.** The response carries an access token and the instance URL, nothing to store between runs. The integration can request a new access token with its own credentials whenever it needs one, so when a call comes back 401 because the token expired, it simply asks again the same way.
 - **Leave refresh token and offline access scopes out of the request.** They belong to flows with a signed-in user, and asking for them here is a common cause of failures.
 - **Idle-token revocation and refresh token rotation don't apply.** Both act on refresh tokens, and this flow never issues one (see [Leading an Integration Fleet Through a Platform OAuth Enforcement Change](13-platform-oauth-enforcement-fleet-migration.md)). That's also why a "reconnect" button in an integrator's admin screen is a sign they're on the wrong flow for an unattended sync.
+- **Keep the credentials out of the URL.** Salesforce will accept the parameters as a query string, but URLs end up in server logs, proxy logs and monitoring tools, which would put the secret there in plain text. Send `grant_type`, `client_id` and `client_secret` as form fields in the POST body (`application/x-www-form-urlencoded`), and do the same for revoke calls.
 - **The client secret is now the whole credential.** If it ever turns up in a screenshot, a ticket, or an email, generate a new secret at the next convenient change and have the integrator update their stored value.
 
 ## The Errors, Decoded
