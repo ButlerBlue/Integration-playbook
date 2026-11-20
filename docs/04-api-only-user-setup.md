@@ -22,6 +22,8 @@ This license exists for system-to-system integrations only, no UI login of any k
 
 Modern Salesforce orgs create an External Client App rather than a legacy Connected App (new Connected App creation is now blocked by default on current platform versions). External Client Apps only support modern OAuth flows and default PKCE to on.
 
+An API-only user can't complete a browser sign-in, so the flow for this user is Client Credentials (or JWT Bearer). Settings below that mention a callback URL or the web server flow only matter if the agreed flow has a browser step. Client Credentials gets switched on, with its run-as user, after the user exists; see [Turn On Client Credentials](#turn-on-client-credentials) below.
+
 1. Setup > External Client App Manager > New External Client App.
 2. Fill in the app name, API name, contact email, and a description identifying the integrator and what it connects to.
 3. Enable OAuth, set the callback URL to the integrator's actual redirect URI (never a placeholder or your own domain).
@@ -42,7 +44,7 @@ Modern Salesforce orgs create an External Client App rather than a legacy Connec
 
 ## Permission Set
 
-1. Create a permission set using the correct API-integration license type, this is the step most commonly missed; a permission set on the wrong license type simply won't assign.
+1. Create the permission set with no License value. A permission set tied to the Salesforce Integration user license silently drops standard objects such as Account and Contact (see [Packaging a Partner Integration into a Reusable Salesforce Package](18-packaging-integration-for-reuse.md)). This user's standard-object access comes from the Salesforce API Integration permission set license assigned on the user record, covered below. Some guides set the permission set's License to Salesforce API Integration instead; never set it to the Salesforce Integration user license.
 2. Grant the real object and field access here. Keep the profile minimal and put the integrator's actual scope in the permission set, where it's easier to audit and revoke later.
 
 ## User
@@ -54,13 +56,25 @@ Modern Salesforce orgs create an External Client App rather than a legacy Connec
 
 The user will not function without this step. On the user record, assign the permission set license first, only then will the permission set itself be assignable. Then assign the actual permission set from the previous section.
 
+## Turn On Client Credentials
+
+The run-as user is the integration's identity. Every call made with a Client Credentials token runs as that user, with that user's permissions, so choosing it is a security decision, not a form field.
+
+1. **Do it after the user is fully set up.** The user needs its permission set license and permission set before you set it as the run-as user, or the first test fails for a reason that has nothing to do with the flow.
+2. **Enable the flow and set the run-as user** in the External Client App's OAuth policies: switch on the Client Credentials flow and pick this integration user as the run-as user.
+3. **Never pick an admin, even to get unblocked.** An admin as run-as user gives the integrator admin-level access to the whole org, hides every permission gap your testing is supposed to catch, and stamps every record the integration creates as the admin's.
+4. **Repeat it in every org.** The app and its run-as user are set per org, so this is an onboarding step for each client org, production included, not a one-time setup. Configure production at the same time as the sandbox, so going live is a credential swap rather than a configuration change; see [Taking a Client Org Live](18-packaging-integration-for-reuse.md#taking-a-client-org-live).
+5. **Know the error you'll see if it's skipped.** A token request returns `invalid_grant` with `no client credentials user enabled` when the flow isn't enabled on the app or no run-as user is set. It's a configuration step on your side, not a problem in the integrator's request, so tell them to retry once it's done.
+6. **Change one credential at a time.** If the client secret also needs rotating, rotate it after the integrator has a working connection on the new flow, so a failure points to one cause instead of two. It matters mechanically too: an integrator still making refresh token calls sends the same secret, so rotating it early breaks the old connection before the new one has taken over.
+7. **Retire what the old flow left behind.** Once nothing uses the old refresh tokens, revoke them from the old user's record: open it and use Revoke next to the app in its OAuth Apps related list. That ends all of them at once, so nobody needs the token values, which Salesforce never shows again after issuing them.
+
 ## Security Token (Legacy Fallback Only)
 
 Skip this unless the integrator's own tooling specifically requires legacy username/password-plus-security-token authentication, standard OAuth (Client Credentials or JWT Bearer) doesn't need it. This authentication method is being phased out platform-wide, so confirm the integrator has a migration plan if they're relying on it. If a token genuinely is required, generate it through the platform's standard token-reset flow and deliver it the same way as any other credential.
 
 ## Test the User
 
-Verify permissions with representative queries before considering the integrator ready. If the integrator attempts a UI login, they should see an access-restricted message, that's expected behavior for this license type, not an error.
+Verify permissions with representative queries before considering the integrator ready. With Client Credentials, request a token and run those queries through it, since that's the only way to test as the run-as user. If the integrator attempts a UI login, they should see an access-restricted message, that's expected behavior for this license type, not an error.
 
 ## Notes
 

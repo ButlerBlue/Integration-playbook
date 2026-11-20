@@ -82,6 +82,19 @@ Read the diff in two directions. **Removals** are grants the org refused to keep
 
 Don't use the retrieve command's own status column for this. In practice it can flag every file it writes as Changed, including files whose content didn't change at all. In one real run it marked all 113 retrieved files as Changed while the diff showed real differences in only a handful. The diff is the test.
 
+### Confirm Which User the Connection Actually Runs As
+
+A permission set only proves something when it's tested on the user the integration really runs as, holding the license your clients will really use. That's easy to get wrong without noticing, because the authentication flow quietly picks the user for you.
+
+An integration built on the Authorization Code flow (a browser sign-in that hands back a refresh token) can only run as a user who can reach Salesforce's sign-in and consent screen. An API-only integration user can't. So during the build, the connection drifts onto whatever test user was able to sign in, usually one on a full license, and every permission test from then on validates the wrong license. The API-only user you provisioned sits unused, and nobody notices until the package is close to shipping. Given how differently the two licenses treat the same permission set (see the license section above), passing tests on the wrong one proves very little.
+
+Two signals that this has happened:
+
+- **The integrator stores a refresh token per org**, or is planning a "get a new token" or "reconnect" button in their admin screen. An unattended server-to-server sync shouldn't ever need a person to sign in again.
+- **The user on the connection isn't the API-only user you set up.** Ask the integrator which username their stored credentials belong to, or check Login History for whose API logins are actually arriving.
+
+The fix is to change the flow before you finish testing, not after. Move the integration to the Client Credentials flow with the API-only integration user as the app's run-as user (setup details in [Debugging Authorization Code + PKCE](15-debugging-oauth-pkce-flows.md#when-the-connecting-user-cant-reach-a-login-screen-client-credentials-flow)). The integrator then stores only the org's My Domain address, the client ID and the secret, there's no refresh token to expire or rotate, and every test from then on runs as the user your clients will actually provision. Enabling Client Credentials on the app adds a flow rather than replacing one, so the existing connection can keep running while the integrator switches; confirm that in a sandbox before relying on it.
+
 ## Matching People Across Systems, and What Happens When You Can't
 
 This playbook already has a full treatment of identity matching in [Identity Keys vs. Record Keys](09-identity-vs-record-keys.md): use a durable, platform-issued identifier as the primary match key, fall back to email only for the remainder, and never fall back to name. That guidance holds unchanged when the matching happens inside a packaged integration rather than custom code you wrote yourself.
@@ -236,6 +249,20 @@ Declaring the dependency has a consequence worth stating plainly to everyone inv
 
 The same split shows up at the field level on the host's own objects. Fields that carry the host package's namespace prefix (say `hostcrm__`), like `hostcrm__Member__c.hostcrm__Status__c`, ship with that package and can be referenced once the dependency is declared. Fields with no prefix on the same object, like `hostcrm__Member__c.Years_Active__c`, were created in one client's org and won't exist anywhere else, so a package that references them fails to build. If an integration genuinely needs one, keep it in a small org-local permission set assigned alongside the package's own, never in the package.
 
+## Taking a Client Org Live
+
+Production is a separate org with its own app, its own credentials and its own integration user, and nothing configured in the sandbox carries over. The cheapest go-live is one where all of that was set up long before anyone flips the switch.
+
+1. **Configure production's authentication when you finish the sandbox's, not on go-live day.** Same flow, same run-as pattern, with production's own API-only integration user as the run-as user. Go-live then becomes a credential swap instead of a configuration change made under time pressure.
+2. **Treat every environment's credentials as separate.** Each org has its own My Domain address, client ID, secret and run-as user, and sandbox values never work in production. Have the integrator store test and live values separately, and deliver production's over your secure credential-exchange channel like any other secret.
+3. **Go live in a fixed order.**
+   1. Install the exact package version that passed isolation testing in the sandbox.
+   2. Confirm production's integration user has its permission set license and the API-facing permission set assigned.
+   3. Have the integrator enter the live credentials and request a token.
+   4. Run one read query and one small real export, check the records, and only then turn the integration on for the client.
+4. **Don't carry sandbox scaffolding into production.** If the sandbox kept an older hand-built permission set around while testing, or anyone used an admin to get unblocked, none of that gets recreated in production. Production starts on the packaged permission set alone, so it matches what you tested in isolation.
+5. **Rotate secrets per environment.** A sandbox secret that was exposed during testing gets rotated in the sandbox. Production's secret is new and stays out of email, screenshots and tickets from day one.
+
 ## What This Buys You
 
 None of the fixes above are expensive individually. What they add up to is the difference between an integration that one engineer can reason about in one org, and one that installs, predictably, into the next client's org without a repeat of the original conversation. The permission-set split means a client's security review has a clean, minimal artifact to look at instead of a grant list built up over months of "just in case." The external ID pattern means onboarding a new client never involves hand-mapping internal record IDs. The dependency declaration means the package tells you, at build time, exactly what the target org needs before it, instead of failing at runtime in a way that looks like your own bug.
@@ -247,6 +274,7 @@ The first client is always the expensive one. The point of packaging it is to ma
 - Every field and object permission in the package is something the integration's code actually reads or writes; anything defensive or "just in case" has been removed
 - Grants were derived from the integrator's inventory of queries and writes; a create-only integration has object Read and Create, plus field-level Edit only on the fields it sets
 - The API-facing permission set and the admin-facing permission set are separate, and each has been tested in isolation, not as a stacked test user
+- Testing ran as the API-only integration user your clients will provision, connected through Client Credentials, not as a test user that could sign in through a browser
 - Neither permission set has a License value (one that was ever deployed with a license was deleted and recreated, not edited); standard-object read and API Enabled live in the permission set, not the profile; the integration user holds the Salesforce API Integration permission set license; and a deploy, retrieve, and diff of both permission sets comes back with nothing removed
 - No unmatched external record is ever linked to a shared placeholder; the lookup is left null with a visible flag field instead
 - The integration user can see every record it matches against in each client org, either through View All Records in the permission set or through a verified onboarding step
@@ -256,5 +284,6 @@ The first client is always the expensive one. The point of packaging it is to ma
 - `CustomTab` metadata is retrieved explicitly for every object a human needs to browse
 - Any dependency on another package's field is declared in `sfdx-project.json` against a Subscriber Package Version ID, pinned to a sensible minimum, never deleted to make a build pass
 - Everyone involved knows the package now installs only where that dependency exists, and the package references no field that lacks the host's namespace prefix
+- Production's app already has Client Credentials and its run-as user configured, its credentials were delivered securely and stored separately from the sandbox's, and go-live follows the fixed order: install the tested version, assign the API permission set, test the connection, then one small real export
 
 Pairs with [Identity Keys vs. Record Keys](09-identity-vs-record-keys.md) and the [Third-Party Integrator Security Playbook](03-integrator-security-playbook.md).

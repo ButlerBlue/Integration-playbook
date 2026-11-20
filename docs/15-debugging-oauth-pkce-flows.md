@@ -53,6 +53,14 @@ In an OAuth-aware client:
 
 On Salesforce specifically, this also requires a designated run-as user under the app's OAuth policies. A missing run-as user and a login-screen-incapable license restriction produce similar-looking failures, so confirm which one you're dealing with before concluding it's the license.
 
+What to expect from the response, and what to build around it:
+
+- **There's no refresh token, by design.** The response carries an access token and the instance URL, nothing to store between runs. The integration can request a new access token with its own credentials whenever it needs one, so when a call comes back 401 because the token expired, it simply asks again the same way.
+- **Leave refresh token and offline access scopes out of the request.** They belong to flows with a signed-in user, and asking for them here is a common cause of failures.
+- **Idle-token revocation and refresh token rotation don't apply.** Both act on refresh tokens, and this flow never issues one (see [Leading an Integration Fleet Through a Platform OAuth Enforcement Change](13-platform-oauth-enforcement-fleet-migration.md)). That's also why a "reconnect" button in an integrator's admin screen is a sign they're on the wrong flow for an unattended sync.
+- **Keep the credentials out of the URL.** Salesforce will accept the parameters as a query string, but URLs end up in server logs, proxy logs and monitoring tools, which would put the secret there in plain text. Send `grant_type`, `client_id` and `client_secret` as form fields in the POST body (`application/x-www-form-urlencoded`), and do the same for revoke calls.
+- **The client secret is now the whole credential.** If it ever turns up in a screenshot, a ticket, or an email, generate a new secret at the next convenient change and have the integrator update their stored value.
+
 ## The Errors, Decoded
 
 | Error | What's Actually Wrong | Fix |
@@ -62,6 +70,7 @@ On Salesforce specifically, this also requires a designated run-as user under th
 | `redirect_uri_mismatch` | The redirect URL in your client doesn't exactly match a registered callback URL on the app; trailing slash, http vs. https, case, or the platform normalized the value on save | Copy the registered callback URL directly out of the app's settings rather than retyping it; check whether more than one callback URL is registered |
 | `invalid_grant` / `invalid code verifier` | The verifier sent at token exchange doesn't match the challenge used when the authorization code was issued, usually from reusing a stale code or regenerating the PKCE pair between the two requests | Let your client manage the verifier/challenge pairing automatically instead of running the authorize and token steps as separate manual requests |
 | Authentication fails even though PKCE and the redirect URL are both confirmed correct | Client credentials are being sent as a Basic Auth header instead of in the request body | Set your client's Credentials option to In Request Body |
+| `invalid_grant` / `no client credentials user enabled` on a Client Credentials token request | The Client Credentials flow isn't enabled on the app, or no run-as user is set | Enable the flow in the app's OAuth policies and set the run-as user to the API-only integration user, never an admin (see [Configuring a Salesforce API-Only Integration User](04-api-only-user-setup.md#turn-on-client-credentials)) |
 
 ## Checklist Before You Call It Broken
 
@@ -76,3 +85,4 @@ On Salesforce specifically, this also requires a designated run-as user under th
 
 - [Configuring a Salesforce API-Only Integration User](04-api-only-user-setup.md)
 - [Retiring the OAuth Implicit Flow](12-retiring-oauth-implicit-flow.md)
+- [Packaging a Partner Integration into a Reusable Salesforce Package](18-packaging-integration-for-reuse.md)
