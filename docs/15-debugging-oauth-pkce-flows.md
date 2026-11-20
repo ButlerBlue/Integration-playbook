@@ -69,6 +69,7 @@ What to expect from the response, and what to build around it:
 | `redirect_uri_mismatch` | The redirect URL in your client doesn't exactly match a registered callback URL on the app; trailing slash, http vs. https, case, or the platform normalized the value on save | Copy the registered callback URL directly out of the app's settings rather than retyping it; check whether more than one callback URL is registered |
 | `invalid_grant` / `invalid code verifier` | The verifier sent at token exchange doesn't match the challenge used when the authorization code was issued, usually from reusing a stale code or regenerating the PKCE pair between the two requests | Let your client manage the verifier/challenge pairing automatically instead of running the authorize and token steps as separate manual requests |
 | Authentication fails even though PKCE and the redirect URL are both confirmed correct | Client credentials are being sent as a Basic Auth header instead of in the request body | Set your client's Credentials option to In Request Body |
+| `invalid_grant` / `no client credentials user enabled` on a Client Credentials token request | The Client Credentials flow isn't enabled on the app, or no run-as user is set | Enable the flow in the app's OAuth policies and set the run-as user to the API-only integration user, never an admin (see [Configuring a Salesforce API-Only Integration User](04-api-only-user-setup.md#turn-on-client-credentials)) |
 
 ## Checklist Before You Call It Broken
 
