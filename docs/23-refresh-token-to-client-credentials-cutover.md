@@ -52,16 +52,29 @@ Two ways to revoke:
 
 | Approach | How | When to use it |
 |---|---|---|
-| **Everything one user holds for this app** | Revoke the app's access from the connecting user's record in Setup. Confirm where your org shows a user's authorized apps. | The normal case. Clears every token, including ones the vendor no longer has stored. |
+| **Everything one user holds for this app** | On the connecting user's record in Setup, use Revoke next to each of this app's rows in the OAuth Apps related list. | The normal case. Clears every token, including ones the vendor no longer has stored. |
 | **Individual tokens** | POST to `/services/oauth2/revoke` with the form field `token=[token value]` in the body | When the vendor still holds specific tokens and wants to revoke them itself |
 
 The revoke parameter is named `token`, not `refresh_token`. Revoking a refresh token also revokes the access tokens issued from it, so one call per refresh token is enough.
+
+### Reading the List Before You Revoke
+
+Each row in a user's OAuth Apps list is one approval. Four columns tell you whether it's still live:
+
+- **Application.** An org can hold two apps for the same vendor with similar names, such as the one in use today and an older one from an earlier setup. Check the Application column in the user's login history to see which app recent logins actually came through, and judge every row against that.
+- **Last Used.** Rows unused for months are leftovers. Under Salesforce's 30-day idle limit they have most likely expired already, and revoking just clears them off the list.
+- **Use Count.** A count of zero is a sign-in that was never used, usually a retry during setup. Revoke it.
+- **Created Date.** When several rows look alike, the one created and used most recently is normally the live one.
+
+Check every user the vendor touched, not just the integration user. The vendor's own admin login collects tokens from developer tools during a build, such as the Salesforce CLI and Workbench. Keep the one their tooling uses today and revoke the rest; a revoked CLI login is fixed by signing in again. Once an older app has no live rows on any user, retire the app itself too (see Step 5 of [Leading an Integration Fleet Through a Platform OAuth Enforcement Change](13-platform-oauth-enforcement-fleet-migration.md)), so only one app is left to reason about.
 
 ## Step 5: Rotate the Client Secret Last
 
 Rotating the secret is good hygiene after a cutover, especially if the old secret ever appeared in a URL. Do it **after** Step 4, not before.
 
 If the vendor's old refresh token calls authenticate with the same secret, rotating it early breaks them the moment it changes, in the middle of the cutover. Confirm in your org whether refresh requests for this app require the secret; plan as if they do.
+
+The new connection uses the same secret, so rotating it also interrupts Client Credentials until the vendor updates its stored value. Agree a time with the vendor, rotate, and deliver the new secret straight away, so the gap is minutes rather than however long it takes them to notice.
 
 Deliver the new secret through the vendor's secure exchange channel. Never by email.
 
@@ -85,7 +98,10 @@ Run Steps 1 through 6 again in production, in the same order, with the vendor co
 | Client secret sent in the URL in production | The secret is written to server and proxy logs | Step 2 |
 | Old tokens revoked before the vendor finished switching | The vendor's integration goes down mid-cutover | Step 3 |
 | Trying to list token values before revoking | Delay, and a request the platform usually cannot satisfy | Step 4 |
+| Revoking by app name without checking which app recent logins used | The live connection is revoked along with the leftovers | Step 4 |
+| Stale developer-tool tokens left on the vendor's admin login | Working credentials nobody is tracking | Step 4 |
 | Secret rotated before old calls were retired | Remaining refresh calls fail the moment the secret changes | Step 5 |
+| Secret rotated without warning the vendor | The new connection fails until the vendor notices and updates its stored secret | Step 5 |
 | Interim permission set left in place | The integration runs with more access than it needs | Step 6 |
 
 Related: [Retiring the OAuth Implicit Flow](12-retiring-oauth-implicit-flow.md), [Third-Party Integrator Security Playbook](03-integrator-security-playbook.md), and [Vendor and Integration Offboarding](05-vendor-offboarding.md) for revoking access when the relationship ends.
