@@ -59,6 +59,8 @@ The revoke parameter is named `token`, not `refresh_token`. Revoking a refresh t
 
 ### Reading the List Before You Revoke
 
+Start by confirming when the cutover actually happened, from evidence rather than memory. The user's login history in Salesforce records a Login Subtype for each sign-in, with values such as OAuth Refresh Token and OAuth Client Credentials. The last refresh token login and the first client credentials login give you the date. Anything that still authorized the old way after that date needs a look before you revoke.
+
 Each row in a user's OAuth Apps list is one approval. Four columns tell you whether it's still live:
 
 - **Application.** An org can hold two apps for the same vendor with similar names, such as the one in use today and an older one from an earlier setup. Check the Application column in the user's login history to see which app recent logins actually came through, and judge every row against that.
@@ -66,7 +68,7 @@ Each row in a user's OAuth Apps list is one approval. Four columns tell you whet
 - **Use Count.** A count of zero is a sign-in that was never used, usually a retry during setup. Revoke it.
 - **Created Date.** When several rows look alike, the one created and used most recently is normally the live one.
 
-Check every user the vendor touched, not just the integration user. The vendor's own admin login collects tokens from developer tools during a build, such as the Salesforce CLI and Workbench. Keep the one their tooling uses today and revoke the rest; a revoked CLI login is fixed by signing in again. Once an older app has no live rows on any user, retire the app itself too (see Step 5 of [Leading an Integration Fleet Through a Platform OAuth Enforcement Change](13-platform-oauth-enforcement-fleet-migration.md)), so only one app is left to reason about.
+Check every user the vendor touched, not just the integration user. The vendor's own admin login collects tokens from developer tools during a build, such as the Salesforce CLI and Workbench. Keep the one their tooling uses today and revoke the rest; a revoked CLI login is fixed by signing in again. If a test user existed only to hold refresh tokens for the old flow, revoke every row on it once the vendor confirms no environment still uses it, then deactivate the user. Salesforce users cannot be deleted, but deactivating ends the user's access and keeps its history, and you can reactivate it later if you need a user to test against. Once an older app has no live rows on any user, retire the app itself too (see Step 5 of [Leading an Integration Fleet Through a Platform OAuth Enforcement Change](13-platform-oauth-enforcement-fleet-migration.md)), so only one app is left to reason about.
 
 ## Step 5: Rotate the Client Secret Last
 
@@ -100,6 +102,7 @@ Run Steps 1 through 6 again in production, in the same order, with the vendor co
 | Trying to list token values before revoking | Delay, and a request the platform usually cannot satisfy | Step 4 |
 | Revoking by app name without checking which app recent logins used | The live connection is revoked along with the leftovers | Step 4 |
 | Stale developer-tool tokens left on the vendor's admin login | Working credentials nobody is tracking | Step 4 |
+| Old test user left active after the cutover | A second sign-in path stays open, and the next cutover starts with a confusing list | Step 4 |
 | Secret rotated before old calls were retired | Remaining refresh calls fail the moment the secret changes | Step 5 |
 | Secret rotated without warning the vendor | The new connection fails until the vendor notices and updates its stored secret | Step 5 |
 | Interim permission set left in place | The integration runs with more access than it needs | Step 6 |
